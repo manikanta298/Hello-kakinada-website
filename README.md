@@ -77,3 +77,9 @@ Postgres migrations against `backend/src/routes/table.routes.ts` and found
 
 All fixes verified with a clean `tsc --noEmit` + `vite build` afterward.
 
+{
+  "scripts": {
+    "migrate": "tsx scripts/migrate.ts"
+  }
+}
+
