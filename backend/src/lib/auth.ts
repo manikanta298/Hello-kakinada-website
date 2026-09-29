@@ -3,7 +3,10 @@ import bcrypt from "bcryptjs";
 import { v4 as uuid } from "uuid";
 import { db } from "../db/index.js";
 
-const JWT_SECRET = process.env["JWT_SECRET"] ?? "dev-secret-change-me";
+const JWT_SECRET = process.env["JWT_SECRET"] as string;
+if (!JWT_SECRET || JWT_SECRET.length < 16) {
+  throw new Error("JWT_SECRET must be set in the environment (at least 16 characters).");
+}
 const JWT_EXPIRES_IN = process.env["JWT_EXPIRES_IN"] ?? "7d";
 
 export type JwtClaims = { sub: string; email: string };

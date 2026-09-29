@@ -1,3 +1,7 @@
+-- HelloKakinada MySQL schema, Hostinger-ready.
+-- USAGE: hPanel > Databases > phpMyAdmin > select YOUR database (left panel) > Import/SQL tab.
+-- Do NOT add CREATE DATABASE (shared hosting blocks it). Safe to re-run (idempotent).
+
 -- MySQL schema for HelloKakinada — migrated 1:1 from Postgres/Supabase.
 -- Notes on translation choices:
 --   * uuid            -> CHAR(36), generated in application code (uuid v4)
@@ -20,7 +24,7 @@ SET NAMES utf8mb4;
 -- ---------------------------------------------------------------------------
 -- users  (replaces Supabase auth.users)
 -- ---------------------------------------------------------------------------
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id CHAR(36) PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
@@ -33,7 +37,7 @@ CREATE TABLE users (
 -- ---------------------------------------------------------------------------
 -- profiles (1:1 with users, kept separate to mirror the original schema)
 -- ---------------------------------------------------------------------------
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id CHAR(36) PRIMARY KEY,
   full_name VARCHAR(255),
   email VARCHAR(255),
@@ -50,8 +54,8 @@ CREATE TABLE profiles (
 -- ---------------------------------------------------------------------------
 -- user_roles
 -- ---------------------------------------------------------------------------
-CREATE TABLE user_roles (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS user_roles (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   user_id CHAR(36) NOT NULL,
   role ENUM('master_admin','content_admin','business_admin','jobs_admin','property_admin','explore_admin','moderation_admin','analytics_admin','user') NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -66,22 +70,23 @@ CREATE TABLE user_roles (
 -- videos, photos — identical shape (generated via a loop in the Postgres
 -- migration; written out explicitly here since MySQL has no DO $$ blocks).
 -- ---------------------------------------------------------------------------
-CREATE TABLE businesses (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS businesses (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   slug VARCHAR(255),
   description TEXT,
   category VARCHAR(120),
   subcategory VARCHAR(120),
   location VARCHAR(255),
-  tags JSON NOT NULL,
+  tags JSON NOT NULL DEFAULT ('[]'),
   image_url TEXT,
-  images JSON NOT NULL,
+  images JSON NOT NULL DEFAULT ('[]'),
   media_url TEXT,
   status ENUM('draft','pending','published','archived','rejected') NOT NULL DEFAULT 'draft',
   featured BOOLEAN NOT NULL DEFAULT FALSE,
   verified BOOLEAN NOT NULL DEFAULT FALSE,
-  details JSON NOT NULL,
+  details JSON NOT NULL DEFAULT ('{}'),
+  sort_order INT NOT NULL DEFAULT 0,
   views INT NOT NULL DEFAULT 0,
   likes INT NOT NULL DEFAULT 0,
   shares INT NOT NULL DEFAULT 0,
@@ -90,21 +95,19 @@ CREATE TABLE businesses (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_businesses_status_created (status, created_at DESC),
-  INDEX idx_businesses_category (category)
+  INDEX idx_businesses_category (category),
+  INDEX idx_businesses_feed (status, sort_order, published_at DESC),
+  INDEX idx_businesses_slug (slug)
 ) ENGINE=InnoDB;
 
-CREATE TABLE jobs LIKE businesses;
-CREATE TABLE properties LIKE businesses;
-CREATE TABLE events LIKE businesses;
-CREATE TABLE food_places LIKE businesses;
-CREATE TABLE services LIKE businesses;
-CREATE TABLE videos LIKE businesses;
-CREATE TABLE photos LIKE businesses;
+CREATE TABLE IF NOT EXISTS jobs LIKE businesses;
+CREATE TABLE IF NOT EXISTS properties LIKE businesses;
+CREATE TABLE IF NOT EXISTS events LIKE businesses;
+CREATE TABLE IF NOT EXISTS food_places LIKE businesses;
+CREATE TABLE IF NOT EXISTS services LIKE businesses;
+CREATE TABLE IF NOT EXISTS videos LIKE businesses;
+CREATE TABLE IF NOT EXISTS photos LIKE businesses;
 
-ALTER TABLE videos ADD COLUMN sort_order INT NOT NULL DEFAULT 0;
-ALTER TABLE photos ADD COLUMN sort_order INT NOT NULL DEFAULT 0;
-ALTER TABLE videos ADD INDEX videos_feed_idx (status, sort_order, published_at DESC);
-ALTER TABLE photos ADD INDEX photos_feed_idx (status, sort_order, published_at DESC);
 
 -- Policies for every content table above ("public reads published" / "staff
 -- reads all" / "staff inserts" / "staff updates" / "staff deletes") are all
@@ -114,8 +117,8 @@ ALTER TABLE photos ADD INDEX photos_feed_idx (status, sort_order, published_at D
 -- ---------------------------------------------------------------------------
 -- categories
 -- ---------------------------------------------------------------------------
-CREATE TABLE categories (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS categories (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
   section VARCHAR(40) NOT NULL DEFAULT 'explore',
   icon VARCHAR(80),
@@ -124,10 +127,11 @@ CREATE TABLE categories (
   enabled BOOLEAN NOT NULL DEFAULT TRUE,
   display_order INT NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_category (section, name)
 ) ENGINE=InnoDB;
 
-INSERT INTO categories (id, name, icon, display_order) VALUES
+INSERT IGNORE INTO categories (id, name, icon, display_order) VALUES
  (UUID(),'Places','MapPin',1),(UUID(),'Food','UtensilsCrossed',2),(UUID(),'Events','CalendarDays',3),
  (UUID(),'Business','Store',4),(UUID(),'Nature','Trees',5),(UUID(),'Beaches','Waves',6),
  (UUID(),'Culture','Landmark',7),(UUID(),'Local Life','Users',8),(UUID(),'News / Updates','Newspaper',9);
@@ -135,16 +139,16 @@ INSERT INTO categories (id, name, icon, display_order) VALUES
 -- ---------------------------------------------------------------------------
 -- locations
 -- ---------------------------------------------------------------------------
-CREATE TABLE locations (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS locations (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) NOT NULL UNIQUE,
-  aliases JSON NOT NULL,
+  aliases JSON NOT NULL DEFAULT ('[]'),
   description TEXT,
   seo_title VARCHAR(255),
   seo_description TEXT,
   image_url TEXT,
-  nearby JSON NOT NULL,
+  nearby JSON NOT NULL DEFAULT ('[]'),
   enabled BOOLEAN NOT NULL DEFAULT TRUE,
   featured BOOLEAN NOT NULL DEFAULT FALSE,
   display_order INT NOT NULL DEFAULT 0,
@@ -152,7 +156,7 @@ CREATE TABLE locations (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-INSERT INTO locations (id, name, slug, aliases, description, seo_title, seo_description, nearby, featured, display_order) VALUES
+INSERT IGNORE INTO locations (id, name, slug, aliases, description, seo_title, seo_description, nearby, featured, display_order) VALUES
 (UUID(),'Kakinada','kakinada','["Kakinada"]','Kakinada is the port city and headquarters of Kakinada district on the Bay of Bengal coast of Andhra Pradesh, known for its planned layout, beach road and Kaja sweets.','Kakinada Local Directory — Businesses, Jobs, Hotels & Homes | HelloKakinada.in','Find verified businesses, hospitals, hotels, jobs, rentals and services across Kakinada city, all in one local directory.','["Bhanugudi","Rama Rao Peta","Sarpavaram","Jagannaickpur","Gandhi Nagar"]',true,1),
 (UUID(),'Bhanugudi','bhanugudi','["Bhanugudi"]','Bhanugudi Junction is one of Kakinada''s busiest commercial hubs, surrounded by hospitals, shops, restaurants and residential colonies like Srinagar and Sriram Nagar.','Businesses, Jobs & Services in Bhanugudi, Kakinada | HelloKakinada.in','Explore hospitals, shops, restaurants, jobs and rentals around Bhanugudi Junction, Srinagar and Sriram Nagar in Kakinada.','["Srinagar","Sriram Nagar","Kondayya Palem","Police Quarters","Rama Rao Peta"]',true,2),
 (UUID(),'Tuni','tuni','["Tuni"]','Tuni is a busy town in Kakinada district on the Chennai–Kolkata highway, a trading centre for mangoes and cashew and a gateway to Talupulamma Lova.','Businesses, Jobs, Hotels & Services in Tuni | HelloKakinada.in','Your Tuni local directory: shops, hotels, restaurants, jobs, properties and services in Tuni town and nearby villages.','["Talupulamma Lova","Payakaraopeta","Kotananduru"]',true,3),
@@ -165,8 +169,8 @@ INSERT INTO locations (id, name, slug, aliases, description, seo_title, seo_desc
 -- ---------------------------------------------------------------------------
 -- reviews
 -- ---------------------------------------------------------------------------
-CREATE TABLE reviews (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS reviews (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   user_id CHAR(36) NULL,
   target_type VARCHAR(40) NOT NULL,
   target_id CHAR(36),
@@ -182,8 +186,8 @@ CREATE TABLE reviews (
 -- ---------------------------------------------------------------------------
 -- reports
 -- ---------------------------------------------------------------------------
-CREATE TABLE reports (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS reports (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   reporter_id CHAR(36) NULL,
   target_type VARCHAR(40) NOT NULL,
   target_id CHAR(36),
@@ -197,8 +201,8 @@ CREATE TABLE reports (
 -- ---------------------------------------------------------------------------
 -- notifications
 -- ---------------------------------------------------------------------------
-CREATE TABLE notifications (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS notifications (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   message TEXT,
   image_url TEXT,
@@ -213,7 +217,7 @@ CREATE TABLE notifications (
 -- ---------------------------------------------------------------------------
 -- site_settings
 -- ---------------------------------------------------------------------------
-CREATE TABLE site_settings (
+CREATE TABLE IF NOT EXISTS site_settings (
   `key` VARCHAR(120) PRIMARY KEY,
   value JSON NOT NULL,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -222,7 +226,7 @@ CREATE TABLE site_settings (
 -- ---------------------------------------------------------------------------
 -- media_interactions
 -- ---------------------------------------------------------------------------
-CREATE TABLE media_interactions (
+CREATE TABLE IF NOT EXISTS media_interactions (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   entity_type VARCHAR(40) NOT NULL,
   entity_id CHAR(36) NOT NULL,
@@ -236,8 +240,8 @@ CREATE TABLE media_interactions (
 -- ---------------------------------------------------------------------------
 -- import_logs
 -- ---------------------------------------------------------------------------
-CREATE TABLE import_logs (
-  id CHAR(36) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS import_logs (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
   created_by CHAR(36),
   kind ENUM('businesses','jobs') NOT NULL,
   source VARCHAR(255) NOT NULL,
@@ -247,6 +251,6 @@ CREATE TABLE import_logs (
   updated INT NOT NULL DEFAULT 0,
   skipped INT NOT NULL DEFAULT 0,
   failed INT NOT NULL DEFAULT 0,
-  failed_rows JSON NOT NULL,
+  failed_rows JSON NOT NULL DEFAULT ('[]'),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

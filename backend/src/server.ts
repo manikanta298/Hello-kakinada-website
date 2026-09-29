@@ -1,7 +1,9 @@
 import "dotenv/config";
+import "express-async-errors";
 import express from "express";
 import cors from "cors";
 import path from "node:path";
+import rateLimit from "express-rate-limit";
 import { authRouter } from "./routes/auth.routes.js";
 import { tableRouter } from "./routes/table.routes.js";
 import { publicRouter } from "./routes/public.routes.js";
@@ -9,12 +11,17 @@ import { adminRouter } from "./routes/admin.routes.js";
 import { mediaRouter } from "./routes/media.routes.js";
 
 const app = express();
+app.set("trust proxy", 1); // behind Hostinger's reverse proxy (needed for rate limiting)
 app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "http://localhost:5173" }));
 app.use(express.json({ limit: "20mb" }));
 
 // Serves uploaded media at /media/<folder>/<file>, replacing the Supabase
 // Storage "media" public bucket.
 app.use("/media", express.static(path.resolve(process.env["UPLOAD_DIR"] ?? "./uploads", "media")));
+
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
+app.use("/api/auth/signin", authLimiter);
+app.use("/api/auth/signup", authLimiter);
 
 app.use("/api/auth", authRouter);
 app.use("/api/table", tableRouter);

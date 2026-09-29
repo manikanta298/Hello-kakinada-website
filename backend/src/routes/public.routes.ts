@@ -72,6 +72,11 @@ function filteredQuery(kind: string, aliases: string[], q: string, category: str
   return query;
 }
 
+async function countOf(kind: string, aliases: string[]): Promise<number> {
+  const row = await filteredQuery(kind, aliases, "", "", false, true).clearSelect().count<{ c: number }[]>({ c: "*" }).first();
+  return Number((row as any)?.c ?? 0);
+}
+
 publicRouter.get("/locations", async (_req, res) => {
   const locs = await db("locations").select("*").where({ enabled: true }).orderBy("display_order");
   const counts = await Promise.all(
@@ -79,8 +84,7 @@ publicRouter.get("/locations", async (_req, res) => {
       const aliases: string[] = (l.aliases?.length ? l.aliases : [l.name]) ?? [l.name];
       const perKind = await Promise.all(
         ["businesses", "jobs", "properties"].map(async (k) => {
-          const rows = await filteredQuery(k, aliases, "", "", false, true);
-          return rows.length;
+          return countOf(k, aliases);
         }),
       );
       return perKind.reduce((a, b) => a + b, 0);
@@ -120,7 +124,7 @@ publicRouter.get("/directory", async (req, res) => {
     filteredQuery(data.kind, aliases, data.q, data.category, false).clone().orderBy("created_at", "desc").offset(from).limit(PAGE),
     filteredQuery(data.kind, aliases, data.q, data.category, false).clone().count<{ c: number }[]>({ c: "*" }).first(),
     filteredQuery(data.kind, aliases, "", "", true).clone().orderBy("created_at", "desc").limit(6),
-    Promise.all(KIND_KEYS.map(async (k) => [k, (await filteredQuery(k, aliases, "", "", false, true)).length] as const)),
+    Promise.all(KIND_KEYS.map(async (k) => [k, await countOf(k, aliases)] as const)),
     filteredQuery(data.kind, aliases, "", "", false).clone().select("category").limit(500),
     db("locations").select("name", "slug").where({ enabled: true }).orderBy("display_order"),
   ]);

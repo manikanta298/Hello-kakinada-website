@@ -90,6 +90,14 @@ tableRouter.post("/:table/query", attachAuth, async (req: AuthedRequest, res) =>
       if (!master && !targetsSelfOnly) {
         return res.status(403).json({ data: null, error: "You can only update your own profile", count: null });
       }
+      if (!master) {
+        // Non-masters may only change harmless fields (never status/email/id).
+        const allowed = new Set(["full_name", "phone", "avatar_url"]);
+        const vals = (spec.values ?? {}) as Record<string, unknown>;
+        if (Object.keys(vals).some((k) => !allowed.has(k))) {
+          return res.status(403).json({ data: null, error: "You can only edit name, phone and avatar", count: null });
+        }
+      }
       return res.json(await runTableQuery(table, spec));
     }
     return res.status(403).json({ data: null, error: "Not permitted", count: null });

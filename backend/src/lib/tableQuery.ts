@@ -108,6 +108,10 @@ export async function runTableQuery(table: string, spec: QuerySpec): Promise<Que
       return { data: values, error: null, count: values.length };
     }
 
+    if ((spec.op === "update" || spec.op === "delete") && !(spec.filters && spec.filters.length)) {
+      return { data: null, error: "Refusing to run update/delete without a filter", count: null };
+    }
+
     if (spec.op === "update") {
       const q = db(table);
       applyFilters(q, spec.filters);
