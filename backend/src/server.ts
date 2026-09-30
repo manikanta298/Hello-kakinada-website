@@ -19,6 +19,12 @@ const allowedOrigins = (process.env["CORS_ORIGIN"] ?? "https://lightslategray-ha
   .map((o) => o.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 app.use(cors({ origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins }));
+// Collapse accidental double slashes ("//api/jobs" -> "/api/jobs") so a trailing
+// slash in the frontend's API URL can't cause 404s.
+app.use((req, _res, next) => {
+  req.url = req.url.replace(/^\/{2,}/, "/");
+  next();
+});
 app.use(express.json({ limit: "20mb" }));
 
 // Serves uploaded media at /media/<folder>/<file>, replacing the Supabase
