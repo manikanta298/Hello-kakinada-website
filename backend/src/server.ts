@@ -12,7 +12,7 @@ import { mediaRouter } from "./routes/media.routes.js";
 
 const app = express();
 app.set("trust proxy", 1); // behind Hostinger's reverse proxy (needed for rate limiting)
-app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "http://localhost:5173" }));
+app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "https://lightslategray-hamster-478810.hostingersite.com/" }));
 app.use(express.json({ limit: "20mb" }));
 
 // Serves uploaded media at /media/<folder>/<file>, replacing the Supabase
