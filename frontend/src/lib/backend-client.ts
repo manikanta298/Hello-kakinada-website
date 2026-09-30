@@ -88,6 +88,25 @@ export const authShim = {
     notify("SIGNED_IN", session);
     return { data: { session, user: session.user }, error: null };
   },
+  async signInWithGoogleCredential(credential: string) {
+    const res = await apiFetch("/api/auth/google", { method: "POST", body: JSON.stringify({ credential }) });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { data: { session: null, user: null }, error: { message: body.error ?? "Google sign-in failed" } };
+    setStoredToken(body.token);
+    const session: Session = { access_token: body.token, user: body.user };
+    notify("SIGNED_IN", session);
+    return { data: { session, user: session.user }, error: null };
+  },
+  async resetPasswordForEmail(email: string) {
+    const res = await apiFetch("/api/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) });
+    const body = await res.json().catch(() => ({}));
+    return { error: res.ok ? null : { message: body.error ?? "Could not send reset email" } };
+  },
+  async resetPasswordWithToken(token: string, password: string) {
+    const res = await apiFetch("/api/auth/reset-password", { method: "POST", body: JSON.stringify({ token, password }) });
+    const body = await res.json().catch(() => ({}));
+    return { error: res.ok ? null : { message: body.error ?? "Could not reset password" } };
+  },
   async signOut() {
     await apiFetch("/api/auth/signout", { method: "POST" }).catch(() => undefined);
     setStoredToken(null);

@@ -254,3 +254,18 @@ CREATE TABLE IF NOT EXISTS import_logs (
   failed_rows JSON NOT NULL DEFAULT ('[]'),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- Password reset tokens (Forgot password via SMTP). Only a SHA-256 hash is stored.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_resets (
+  id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_reset_token (token_hash),
+  INDEX idx_reset_user (user_id),
+  CONSTRAINT fk_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

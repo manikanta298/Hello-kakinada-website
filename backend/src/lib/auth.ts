@@ -53,3 +53,16 @@ export async function createUserWithProfile(email: string, password: string, ful
   });
   return { id, email, full_name: fullName, avatar_url: null };
 }
+
+/** Finds a user by email, or creates one (used for Google sign-in). */
+export async function findOrCreateOAuthUser(email: string, fullName: string | null, avatarUrl: string | null): Promise<PublicUser> {
+  const existing = await db("users").select("id", "email", "full_name", "avatar_url").where({ email }).first();
+  if (existing) {
+    if (!existing.email_confirmed_at) await db("users").where({ id: existing.id }).update({ email_confirmed_at: new Date() });
+    return existing as PublicUser;
+  }
+  // Random unusable password: the account signs in via Google (or "Forgot password" to set one).
+  const created = await createUserWithProfile(email, uuid() + uuid(), fullName);
+  await db("users").where({ id: created.id }).update({ avatar_url: avatarUrl, email_confirmed_at: new Date() });
+  return { ...created, avatar_url: avatarUrl };
+}

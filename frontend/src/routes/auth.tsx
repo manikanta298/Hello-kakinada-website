@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { GoogleButton } from "@/components/google-button";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -53,11 +53,6 @@ function AuthPage() {
     setBusy(false);
   };
 
-  const google = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
-    if (r.error) toast.error(r.error.message ?? "Google sign-in failed");
-  };
-
   return (
     <div className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-4 py-12">
       <div className="w-full rounded-2xl border bg-card p-6 shadow-[var(--shadow-sm)] sm:p-8">
@@ -67,13 +62,14 @@ function AuthPage() {
           <p className="mt-6 rounded-xl bg-secondary p-4 text-sm">Check <b>{email}</b> and click the confirmation link to finish signing up.</p>
         ) : (
           <>
-            <Button variant="outline" className="mt-6 w-full" onClick={google}>Continue with Google</Button>
+            <GoogleButton />
             <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
             <form onSubmit={submit} className="space-y-3">
               {mode === "up" && <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />}
               <Input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
               <Input type="password" required minLength={6} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
               <Button type="submit" className="w-full" disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}{mode === "in" ? "Sign in" : "Sign up"}</Button>
+              {mode === "in" && <div className="text-right"><Link to="/forgot-password" className="text-xs font-semibold text-primary">Forgot password?</Link></div>}
             </form>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               {mode === "in" ? "New here?" : "Already have an account?"}{" "}

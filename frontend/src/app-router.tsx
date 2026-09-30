@@ -11,6 +11,8 @@ import * as IndexRoute from "./routes/index";
 import * as AboutRoute from "./routes/about";
 import * as AccountRoute from "./routes/account";
 import * as AuthRoute from "./routes/auth";
+import * as ForgotPasswordRoute from "./routes/forgot-password";
+import * as ResetPasswordRoute from "./routes/reset-password";
 import * as BestHotelsRoute from "./routes/best-hotels-in-kakinada";
 import * as BusinessSlugRoute from "./routes/business.$slug";
 import * as BusinessesRoute from "./routes/businesses";
@@ -88,6 +90,8 @@ export const router = createBrowserRouter([
       { path: "about", ...leaf(AboutRoute) },
       { path: "account", ...leaf(AccountRoute) },
       { path: "auth", ...leaf(AuthRoute) },
+      { path: "forgot-password", ...leaf(ForgotPasswordRoute) },
+      { path: "reset-password", ...leaf(ResetPasswordRoute) },
       { path: "best-hotels-in-kakinada", ...leaf(BestHotelsRoute) },
       { path: "business/:slug", ...leaf(BusinessSlugRoute) },
       { path: "businesses", ...leaf(BusinessesRoute) },
