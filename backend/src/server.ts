@@ -12,7 +12,13 @@ import { mediaRouter } from "./routes/media.routes.js";
 
 const app = express();
 app.set("trust proxy", 1); // behind Hostinger's reverse proxy (needed for rate limiting)
-app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "https://lightslategray-hamster-478810.hostingersite.com/" }));
+// CORS_ORIGIN may hold one or more comma-separated origins. Trailing slashes are
+// stripped because browsers send the origin without one.
+const allowedOrigins = (process.env["CORS_ORIGIN"] ?? "https://lightslategray-hamster-478810.hostingersite.com")
+  .split(",")
+  .map((o) => o.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+app.use(cors({ origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins }));
 app.use(express.json({ limit: "20mb" }));
 
 // Serves uploaded media at /media/<folder>/<file>, replacing the Supabase
