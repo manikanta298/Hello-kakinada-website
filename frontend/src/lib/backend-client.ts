@@ -5,7 +5,7 @@
 // this module's internals changed, from calling Supabase to calling our
 // own Express API.
 
-export const API_BASE = (import.meta as any).env?.["VITE_API_URL"] || "http://localhost:4000";
+export const API_BASE = (import.meta as any).env?.["VITE_API_URL"] || "https://lightslategray-butterfly-366538.hostingersite.com";
 
 // ---------------------------------------------------------------------------
 // token storage + auth state pub-sub (replaces supabase-js's internal session store)
