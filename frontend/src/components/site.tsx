@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Menu, X, Plus, Home, Compass, Heart, User, MapPin, Phone, Navigation, BadgeCheck, Briefcase, Clock, Flag, CalendarPlus, ExternalLink } from "lucide-react";
 import { SUGGESTIONS, LOCATIONS, type Business, type Job, type Property, type Restaurant, type Event } from "@/lib/data";
-import logoAsset from "@/assets/hellokakinada-logo-transparent.png.asset.json";
 
 const NAV = [
   { to: "/", label: "Home" }, { to: "/jobs", label: "Jobs" }, { to: "/properties", label: "Rent / Buy" },
@@ -14,7 +13,7 @@ const NAV = [
 export function Logo() {
   return (
     <Link to="/" aria-label="HelloKakinada.in home" className="flex shrink-0 items-center">
-      <img src={logoAsset.url} alt="HelloKakinada.in" className="h-8 w-auto max-w-[150px] object-contain sm:h-9 sm:max-w-[190px]" />
+      <span className="min-w-0 flex-1 truncate text-lg font-extrabold tracking-tight sm:text-xl">Hello<span className="text-primary">Kakinada</span>.in</span>
     </Link>
   );
 }

@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "./context";
 import { GlobalSearch } from "./global-search";
 import { ROLE_LABELS } from "@/lib/admin/sections";
-import logoAsset from "@/assets/hellokakinada-logo-transparent.png.asset.json";
 
 const GROUPS = [
   { label: null, items: [{ to: "/admin", label: "Dashboard", icon: LayoutDashboard, section: "dashboard", exact: true }] },
@@ -61,7 +60,7 @@ function Nav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () =>
         {collapsed ? (
           <img src="/favicon.png" alt="" className="h-9 w-9 object-contain" />
         ) : (
-          <><img src={logoAsset.url} alt="HelloKakinada.in" className="h-7 min-w-0 flex-1 object-contain object-left" /><span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">CMS</span></>
+          <><span className="min-w-0 flex-1 truncate text-lg font-extrabold tracking-tight sm:text-xl">Hello<span className="text-primary">Kakinada</span>.in</span><span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">CMS</span></>
         )}
       </Link>
       <nav className="flex-1 overflow-y-auto px-2 py-3">
