@@ -61,7 +61,10 @@ app.get("/api/health/db", async (_req, res) => {
 app.use((req, res) => res.status(404).json({ error: "Not found", method: req.method, path: req.originalUrl }));
 app.use((err, _req, res, _next) => {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    // Expose only the short error code (e.g. ER_ACCESS_DENIED_ERROR, ER_NO_SUCH_TABLE,
+    // ECONNREFUSED) so problems can be diagnosed from the browser Network tab.
+    const code = err?.code;
+    res.status(500).json({ error: "Internal server error", ...(typeof code === "string" ? { code } : {}) });
 });
 process.on("unhandledRejection", (r) => console.error("unhandledRejection:", r));
 process.on("uncaughtException", (e) => console.error("uncaughtException:", e));

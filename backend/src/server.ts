@@ -68,7 +68,10 @@ app.use((req, res) => res.status(404).json({ error: "Not found", method: req.met
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
-  res.status(500).json({ error: "Internal server error" });
+  // Expose only the short error code (e.g. ER_ACCESS_DENIED_ERROR, ER_NO_SUCH_TABLE,
+  // ECONNREFUSED) so problems can be diagnosed from the browser Network tab.
+  const code = (err as { code?: unknown })?.code;
+  res.status(500).json({ error: "Internal server error", ...(typeof code === "string" ? { code } : {}) });
 });
 
 process.on("unhandledRejection", (r) => console.error("unhandledRejection:", r));

@@ -1,14 +1,21 @@
 import knexFactory from "knex";
 import "dotenv/config";
 const JSON_COLS = new Set(["tags", "images", "details", "aliases", "nearby", "failed_rows", "value"]);
+const requiredEnv = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"];
+for (const key of requiredEnv) {
+    if (!process.env[key]) {
+        throw new Error(`Missing required database environment variable: ${key}`);
+    }
+}
+const dbHost = process.env["DB_HOST"] === "localhost" ? "127.0.0.1" : process.env["DB_HOST"];
 export const db = knexFactory({
     client: "mysql2",
     connection: {
-        host: process.env["DB_HOST"] ?? "localhost",
+        host: dbHost,
         port: Number(process.env["DB_PORT"] ?? 3306),
-        user: process.env["DB_USER"] ?? "root",
-        password: process.env["DB_PASSWORD"] ?? "",
-        database: process.env["DB_NAME"] ?? "hellokakinada",
+        user: process.env["DB_USER"],
+        password: process.env["DB_PASSWORD"],
+        database: process.env["DB_NAME"],
         timezone: "Z",
         charset: "utf8mb4",
         typeCast: (field, next) => {
