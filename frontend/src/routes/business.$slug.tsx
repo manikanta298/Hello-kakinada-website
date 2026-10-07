@@ -1,4 +1,5 @@
 import { Link, Outlet, useParams, useNavigate } from "react-router-dom";
+import { RichText } from "@/components/rich-text";
 import { useLoaderData } from "react-router-dom";
 import { useRawSearch, useSearchNav, useSeo } from "@/lib/router-shim";
 import { Phone, MessageCircle, Globe, Clock, MapPin } from "lucide-react";
@@ -48,7 +49,7 @@ function D() {
         </div>
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <section><h2 className="text-xl font-bold">About</h2><p className="mt-2 whitespace-pre-line text-muted-foreground">{b.about || "Not provided"}</p></section>
+            <section><h2 className="text-xl font-bold">About</h2><RichText html={b.about || "Not provided"} className="mt-2 text-muted-foreground" /></section>
             {b.services.length > 0 && <section><h2 className="text-xl font-bold">Services</h2><div className="mt-2 flex flex-wrap gap-2">{b.services.map((s) => <span key={s} className="rounded-full bg-secondary px-3 py-1 text-sm">{s}</span>)}</div></section>}
             <section><h2 className="text-xl font-bold">Reviews</h2><p className="mt-2 text-muted-foreground">No reviews yet. Be the first once accounts launch.</p></section>
           </div>

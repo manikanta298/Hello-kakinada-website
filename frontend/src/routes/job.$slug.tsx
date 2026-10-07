@@ -1,4 +1,5 @@
 import { Link, Outlet, useParams, useNavigate } from "react-router-dom";
+import { RichText } from "@/components/rich-text";
 import { useLoaderData } from "react-router-dom";
 import { useRawSearch, useSearchNav, useSeo } from "@/lib/router-shim";
 import { ArrowLeft, MapPin, Briefcase, IndianRupee, Clock, CalendarDays, Building2, Phone, MessageCircle, Mail, ExternalLink, GraduationCap } from "lucide-react";
@@ -92,7 +93,7 @@ function D() {
           {shown.length ? shown.map(([t, v]) => (
             <section key={t} className="rounded-2xl border bg-card p-5 sm:p-6">
               <h2 className="text-lg font-bold">{t}</h2>
-              <p className="mt-2 whitespace-pre-line break-words leading-relaxed text-muted-foreground">{v}</p>
+              <RichText html={v!} className="mt-2 break-words leading-relaxed text-muted-foreground" />
             </section>
           )) : <section className="rounded-2xl border bg-card p-5 sm:p-6"><h2 className="text-lg font-bold">Job description</h2><p className="mt-2 text-muted-foreground">Details will be provided by the employer.</p></section>}
           {exp && <section className="rounded-2xl border bg-card p-5 sm:p-6"><h2 className="text-lg font-bold">Experience</h2><p className="mt-2 text-muted-foreground">{exp}</p></section>}
