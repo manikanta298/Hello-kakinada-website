@@ -85,10 +85,26 @@ export function splitUrls(v: unknown): string[] {
   return Array.from(new Set(ok));
 }
 
+const CATEGORY_ALIASES: Record<string, string> = {
+  teacher: "Teaching", tutor: "Teaching", faculty: "Teaching", software: "IT / Software", developer: "IT / Software", it: "IT / Software",
+  doctor: "Healthcare|Health", nurse: "Healthcare|Health", hospital: "Healthcare|Health", pharmacy: "Healthcare|Health", hotel: "Hotel / Restaurant|Hotels", restaurant: "Hotel / Restaurant",
+  cook: "Hotel / Restaurant", chef: "Hotel / Restaurant", admin: "Office / Admin", office: "Office / Admin", receptionist: "Office / Admin", clerk: "Office / Admin",
+  marine: "Aqua / Marine", fishing: "Aqua / Marine", aqua: "Aqua / Marine", shop: "Retail", store: "Retail", marketing: "Sales", delivery: "Driver",
+  school: "Education", college: "Education", coaching: "Education", clinic: "Health", medical: "Health", lodge: "Hotels", resort: "Hotels",
+  car: "Automobile", bike: "Automobile", vehicle: "Automobile", garage: "Automobile", mobile: "Electronics", computer: "Electronics",
+  property: "Real Estate", realestate: "Real Estate", bank: "Finance", loan: "Finance", insurance: "Finance", clothing: "Fashion", boutique: "Fashion",
+};
+const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map((w) => (w.length > 3 ? w.replace(/s$/, "") : w));
+
+/** Returns the matching option, or "" when nothing matches (never guesses on partial text). */
 function matchOption(value: string, options: string[]) {
   const n = norm(value);
   if (!n) return "";
-  return options.find((o) => norm(o) === n) ?? options.find((o) => norm(o).includes(n) || n.includes(norm(o))) ?? value;
+  const exact = options.find((o) => norm(o) === n);
+  if (exact) return exact;
+  const ws = words(value);
+  for (const w of ws) { const a = (CATEGORY_ALIASES[w] ?? CATEGORY_ALIASES[norm(w)] ?? "").split("|").find((x) => options.includes(x)); if (a) return a; }
+  return options.find((o) => { const ow = words(o); return ws.some((w) => w.length > 2 && ow.includes(w)); }) ?? "";
 }
 
 export type Prepared = {
@@ -111,7 +127,13 @@ export function prepareRow(kind: Kind, row: Record<string, unknown>, map: Record
   const errors: string[] = [];
   if (!rec["title"]) errors.push(`Missing ${TARGETS[kind][0]!.label}`);
   const cats = kind === "businesses" ? SECTIONS["businesses"]!.categories : SECTIONS["jobs"]!.categories;
-  if (rec["category"]) rec["category"] = matchOption(String(rec["category"]), cats);
+  if (rec["category"]) {
+    const original = String(rec["category"]);
+    const matched = matchOption(original, cats);
+    if (matched) rec["category"] = matched;
+    else if (cats.includes("Other")) { rec["category"] = "Other"; rec["category_original"] = original; }
+    else errors.push(`Category "${original}" is not recognised`);
+  }
   for (const k of ["phone", "whatsapp"]) {
     if (rec[k] && digits(rec[k]).length < 10) errors.push(`${k === "phone" ? "Phone" : "WhatsApp"} looks invalid`);
   }
